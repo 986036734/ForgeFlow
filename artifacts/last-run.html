@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ForgeFlow trace · verdict pass · repairs=1</title>
+<style>
+  :root { color-scheme: light; --ink:#142033; --muted:#445068; --line:#d5dbe6; --bg:#f4f6f8; --card:#fff; }
+  * { box-sizing: border-box; }
+  body { margin: 0; font: 18px/1.45 ui-sans-serif, system-ui, sans-serif; color: var(--ink); background: var(--bg); }
+  header { position: sticky; top: 0; background: #fff; border-bottom: 1px solid var(--line); padding: 16px 24px; display: flex; justify-content: space-between; gap: 16px; align-items: center; }
+  h1 { font-size: 28px; margin: 0; letter-spacing: -0.03em; }
+  h2 { font-size: 22px; margin: 0 0 12px; }
+  main { max-width: 1080px; margin: 0 auto; padding: 24px; display: grid; gap: 16px; }
+  .badge, .verdict { display: inline-block; border-radius: 999px; padding: 4px 10px; font-size: 14px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; }
+  .verdict { font-size: 22px; padding: 8px 16px; }
+  .verdict.pass, .tone-pass strong { color: #0b6e4f; }
+  .verdict.fail, .tone-fail strong { color: #9b1c1c; }
+  .verdict.pass { background: #e5f6ef; }
+  .verdict.fail { background: #fde8e8; }
+  .local { background: #e5f6ef; color: #0b6e4f; }
+  .mcp { background: #e7f0fa; color: #1d4e89; }
+  .banner { background: #fff; border: 1px solid var(--line); border-radius: 16px; padding: 20px 24px; }
+  .banner p { margin: 8px 0 0; color: var(--muted); }
+  .story { font-size: 32px; font-weight: 700; letter-spacing: -0.03em; }
+  .fail { color: #9b1c1c; }
+  .repair { color: #8a4b08; }
+  .pass { color: #0b6e4f; }
+  .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
+  .stat { background: #fff; border: 1px solid var(--line); border-radius: 12px; padding: 12px 14px; }
+  .stat b { display: block; font-size: 28px; }
+  .stat span { color: var(--muted); font-size: 14px; }
+  .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  article, section { background: #fff; border: 1px solid var(--line); border-radius: 16px; padding: 16px 18px; }
+  article.fail { border-color: #f3b4b4; background: #fff7f7; }
+  article.pass { border-color: #b7e4d2; background: #f5fbf8; }
+  pre { white-space: pre-wrap; font: 14px/1.4 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; margin: 0; }
+  ol, ul { margin: 0; padding-left: 0; list-style: none; display: grid; gap: 8px; }
+  li { display: flex; gap: 8px; align-items: flex-start; }
+  .idx { width: 28px; color: var(--muted); }
+  table { width: 100%; border-collapse: collapse; font-size: 16px; }
+  td { border-top: 1px solid var(--line); padding: 8px 6px; vertical-align: top; }
+  @media (max-width: 800px) { .stats, .grid { grid-template-columns: 1fr; } header { align-items: flex-start; flex-direction: column; } }
+</style>
+</head>
+<body>
+<header>
+  <div>
+    <h1>ForgeFlow</h1>
+    <div>offline mock · local Zod tools + stdio MCP</div>
+  </div>
+  <div class="verdict pass" data-verdict="pass" data-repairs="1">verdict pass</div>
+</header>
+<main>
+  <section class="banner">
+    <div class="story"><span class="fail">FAIL</span> → <span class="repair">repair 1</span> → <span class="pass">PASS</span></div>
+    <p>Audit the repo README and open issues, then draft a PR description and checklist.</p>
+  </section>
+  <div class="stats">
+    <div class="stat"><b>1</b><span>repairs</span></div>
+    <div class="stat"><b>4</b><span>local tool calls</span></div>
+    <div class="stat"><b>3</b><span>mcp tool calls</span></div>
+    <div class="stat"><b>7/7</b><span>checks on last draft</span></div>
+  </div>
+  <section>
+    <h2>Plan</h2>
+    <ol><li><span class="badge local">local</span><b>1. read_readme</b> Read README</li><li><span class="badge local">local</span><b>2. list_files</b> List repository files</li><li><span class="badge mcp">mcp</span><b>3. list_open_issues</b> List open issues</li><li><span class="badge mcp">mcp</span><b>4. get_issue</b> Read high-severity issues</li><li><span class="badge local">local</span><b>5. draft_pr</b> Draft PR description</li></ol>
+  </section>
+  <div class="grid">
+    <article class="fail">
+      <h2>Attempt 1 · intentional draft-pr FAIL</h2>
+      <ul><li><b>title</b> Title must be at least 12 characters and mention both the audit and the README.</li><li><b>summary-quote</b> Summary needs a backtick quote of at least 24 characters copied from the README tool output.</li><li><b>issue-citations</b> Missing high-severity issues: #12, #18.</li><li><b>checklist-gates</b> Checklist is missing: tests, docs, risk, rollback.</li><li><b>evidence-map</b> Evidence map must include both a local tool and an mcp tool.</li><li><b>coverage</b> Unsupported claims: All CI checks are already green and this change has zero risk.</li><li><b>no-gap</b> Draft still contains the intentional gap marker.</li></ul>
+      <pre># Update repository
+
+## Summary
+General cleanup of the repository with no cited sources.
+
+## README findings
+- The README is probably fine.
+
+## Open issues
+- none cited
+
+## Checklist
+- [ ] Ship it
+
+## Evidence
+- none
+
+## Claims
+- All CI checks are already green and this change has zero risk.
+
+INTENTIONAL_GAP</pre>
+    </article>
+    <article class="pass">
+      <h2>Attempt 2 · PASS</h2>
+      <pre># PR: Audit README and cite open issues
+
+## Summary
+Audit for &quot;Audit the repo README and open issues, then draft a PR description and checklist&quot;. README states: `ForgeFlow turns one sentence into a checkable tool workflow.` The checklist is limited to evidence from local tools and MCP issue tools.
+
+## README findings
+- README states: `ForgeFlow turns one sentence into a checkable tool workflow.`
+
+## Open issues
+- #12 README quick start omits the mock judge path — Judges need pnpm demo:mock called out beside pnpm test. The scored path must stay offline.
+- #18 Verifier accepts a PR draft that cites no issues — A draft can pass with a generic checklist. Require high-severity issue numbers and a quote from the README.
+- #27 Trace HTML is hard to read on a projector — Increase contrast for the fail then repair sequence so a 3-minute recording shows repairs=1.
+
+## Checklist
+- [ ] Tests cover the verifier rubric and the mock repair loop
+- [ ] Docs point judges at DEMO.md and the stdio MCP server
+- [ ] Risk: live OpenAI calls can fail on geo-blocked networks, including mainland China
+- [ ] Rollback: revert the PR; the mock path has no external side effects
+
+## Evidence
+- c1 read_readme (local): ForgeFlow turns one sentence into a checkable tool workflow.
+- c3 list_open_issues (mcp): open issue list
+- c2 list_files (local): DEMO.md
+- c4 get_issue (mcp): README quick start omits the mock judge path
+- c5 get_issue (mcp): Verifier accepts a PR draft that cites no issues
+
+## Claims
+- ForgeFlow turns one sentence into a checkable tool workflow.
+- README quick start omits the mock judge path
+- Verifier accepts a PR draft that cites no issues
+- DEMO.md</pre>
+    </article>
+  </div>
+  <section>
+    <h2>Timeline</h2>
+    <ol><li class="tone-local"><span class="idx">6</span><div><strong>tool read_readme (local) ok</strong><p>s1</p></div></li><li class="tone-local"><span class="idx">7</span><div><strong>tool list_files (local) ok</strong><p>s2</p></div></li><li class="tone-mcp"><span class="idx">8</span><div><strong>tool list_open_issues (mcp) ok</strong><p>s3</p></div></li><li class="tone-mcp"><span class="idx">9</span><div><strong>tool get_issue (mcp) ok #12</strong><p>s4#12</p></div></li><li class="tone-mcp"><span class="idx">10</span><div><strong>tool get_issue (mcp) ok #18</strong><p>s4#18</p></div></li><li class="tone-fail"><span class="idx">11</span><div><strong>tool draft_pr (local) intentional draft-pr FAIL</strong><p>First draft omits quotes, issue numbers, and checklist gates.</p></div></li><li class="tone-fail"><span class="idx">12</span><div><strong>verifier FAIL</strong><p>title, summary-quote, issue-citations, checklist-gates, evidence-map, coverage, no-gap</p></div></li><li class="tone-repair"><span class="idx">13</span><div><strong>repair 1</strong><p>Draft again from README quotes and MCP issue records.</p></div></li><li class="tone-pass"><span class="idx">14</span><div><strong>tool draft_pr (local) ok</strong><p>Grounded draft from the tool corpus.</p></div></li><li class="tone-pass"><span class="idx">15</span><div><strong>verifier PASS</strong><p>All rubric checks passed.</p></div></li><li class="tone-pass"><span class="idx">16</span><div><strong>hitl approve</strong><p>mock-auto: verifier pass under the auto policy</p></div></li><li class="tone-pass"><span class="idx">17</span><div><strong>verdict pass</strong><p>All rubric checks passed after 1 repair.</p></div></li></ol>
+  </section>
+  <section>
+    <h2>Rubric</h2>
+    <table><tr><td>PASS</td><td>title</td><td>Title names the audit and the README.</td></tr><tr><td>PASS</td><td>summary-quote</td><td>Summary quotes a README line returned by the tool.</td></tr><tr><td>PASS</td><td>issue-citations</td><td>Cites every high-severity issue (#12, #18).</td></tr><tr><td>PASS</td><td>checklist-gates</td><td>Checklist covers tests, docs, risk, and rollback.</td></tr><tr><td>PASS</td><td>evidence-map</td><td>Evidence map cites a local call and an mcp call that exist in the trace.</td></tr><tr><td>PASS</td><td>coverage</td><td>Every claim is a substring of the tool corpus.</td></tr><tr><td>PASS</td><td>no-gap</td><td>Draft is not marked as an intentional gap.</td></tr></table>
+  </section>
+  <section>
+    <h2>HITL</h2>
+    <p><b>approve</b> · mock-auto · verifier pass under the auto policy</p>
+  </section>
+</main>
+</body>
+</html>

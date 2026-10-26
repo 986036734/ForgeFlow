@@ -1,0 +1,30 @@
+{
+  "name": "forgeflow",
+  "version": "0.1.0",
+  "private": true,
+  "description": "One-sentence goal to a checkable tool workflow: plan, work with local Zod tools and MCP, verify, repair, and trace.",
+  "type": "module",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "demo:mock": "tsx src/cli.ts demo --mode mock",
+    "demo:live": "tsx src/cli.ts demo --mode live",
+    "test": "vitest run",
+    "eval": "tsx src/cli.ts eval",
+    "mcp": "tsx src/mcp-server/index.ts",
+    "typecheck": "tsc --noEmit",
+    "start": "tsx src/cli.ts demo --mode mock"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "1.32.2",
+    "@openai/agents": "0.21.0",
+    "zod": "^4.1.12"
+  },
+  "devDependencies": {
+    "@types/node": "^22.19.0",
+    "tsx": "^4.20.6",
+    "typescript": "^5.9.3",
+    "vitest": "^3.2.4"
+  }
+}

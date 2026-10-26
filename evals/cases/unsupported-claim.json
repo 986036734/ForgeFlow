@@ -1,0 +1,9 @@
+{
+  "id": "unsupported-claim",
+  "kind": "rubric",
+  "mutate": "unsupported-claim",
+  "expect": {
+    "pass": false,
+    "failedChecks": ["coverage"]
+  }
+}

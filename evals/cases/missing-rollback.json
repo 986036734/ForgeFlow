@@ -1,0 +1,9 @@
+{
+  "id": "missing-rollback",
+  "kind": "rubric",
+  "mutate": "drop-rollback",
+  "expect": {
+    "pass": false,
+    "failedChecks": ["checklist-gates"]
+  }
+}

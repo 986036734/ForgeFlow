@@ -1,0 +1,9 @@
+ForgeFlow scored path is offline: pnpm test, pnpm demo:mock, pnpm eval.
+
+Keep the intentional draft_pr failure on attempt 1. demo:mock must print repairs=1 and verdict pass.
+
+Verifier coverage is exact substring of tool output. High-severity issues must be cited. Checklist gates: tests, docs, risk, rollback.
+
+Do not commit secrets, .env, or recordings. Live OpenAI may be geo-blocked (mainland China). Mock is the judge path.
+
+MCP server: pnpm exec tsx src/mcp-server/index.ts. Do not write protocol logs to stdout.

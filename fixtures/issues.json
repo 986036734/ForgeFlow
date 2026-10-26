@@ -1,0 +1,26 @@
+[
+  {
+    "number": 12,
+    "title": "README quick start omits the mock judge path",
+    "body": "Judges need pnpm demo:mock called out beside pnpm test. The scored path must stay offline.",
+    "severity": "high",
+    "state": "open",
+    "labels": ["docs", "demo"]
+  },
+  {
+    "number": 18,
+    "title": "Verifier accepts a PR draft that cites no issues",
+    "body": "A draft can pass with a generic checklist. Require high-severity issue numbers and a quote from the README.",
+    "severity": "high",
+    "state": "open",
+    "labels": ["verifier"]
+  },
+  {
+    "number": 27,
+    "title": "Trace HTML is hard to read on a projector",
+    "body": "Increase contrast for the fail then repair sequence so a 3-minute recording shows repairs=1.",
+    "severity": "medium",
+    "state": "open",
+    "labels": ["trace"]
+  }
+]

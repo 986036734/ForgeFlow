@@ -1,0 +1,9 @@
+{
+  "id": "phantom-issue",
+  "kind": "rubric",
+  "mutate": "phantom-issue",
+  "expect": {
+    "pass": false,
+    "failedChecks": ["issue-citations"]
+  }
+}

@@ -1,0 +1,12 @@
+{
+  "id": "readme-audit",
+  "kind": "workflow",
+  "goal": "Audit the repo README and open issues, then draft a PR description and checklist.",
+  "expect": {
+    "verdict": "pass",
+    "repairs": 1,
+    "hitl": "approve",
+    "tools": ["read_readme", "list_files", "list_open_issues", "get_issue", "draft_pr"],
+    "kinds": ["local", "mcp"]
+  }
+}
