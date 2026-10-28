@@ -4,6 +4,7 @@ import { Agent, MCPServerStdio, run, tool } from "@openai/agents";
 import { z } from "zod";
 import { LIVE_INSTRUCTIONS } from "./prompts.js";
 import type { ToolCallRecord, ToolContext } from "./types.js";
+import { mcpChildEnv } from "../util/childEnv.js";
 import { ConfigError } from "../util/errors.js";
 import { issuesPath, repoRoot } from "../util/paths.js";
 import { draftPrTool } from "../tools/local/draftPr.js";
@@ -33,7 +34,7 @@ export async function runLive(goal: string, root = repoRoot()): Promise<string> 
     command: process.execPath,
     args: [require.resolve("tsx/cli"), path.join(root, "src", "mcp-server", "index.ts")],
     cwd: root,
-    env: restrictedChildEnv(issuesPath(root)),
+    env: mcpChildEnv(issuesPath(root)),
     cacheToolsList: true,
   });
   await mcp.connect();
@@ -104,13 +105,4 @@ function remember(ctx: ToolContext, name: "read_readme" | "list_files", input: u
     output,
     ok: true,
   });
-}
-
-function restrictedChildEnv(issuesFile: string): Record<string, string> {
-  const env: Record<string, string> = {
-    PATH: process.env.PATH ?? "",
-    FORGEFLOW_ISSUES_PATH: issuesFile,
-  };
-  if (process.env.HOME) env.HOME = process.env.HOME;
-  return env;
 }

@@ -2,6 +2,23 @@
 
 Scored path: `pnpm demo:mock`. Stay offline. Do not open a key file and do not play a recording from the repo.
 
+## 90 seconds
+
+If the clock is short, run only this:
+
+```bash
+pnpm install
+pnpm demo:mock
+```
+
+`pnpm demo` is the same mock run. On stdout, in this order: `intentional draft-pr FAIL`, then `repair 1`, then `repairs=1`, then `verdict pass`. Open `artifacts/last-run.html`. The sticky header is **verdict pass**. The banner is FAIL → repair 1 → PASS. Local and MCP badges are words, not color alone.
+
+`pnpm test` and `pnpm eval` are the other two offline checks. The rest of this page is the 3-minute camera script.
+
+## 给评委
+
+离线打分只看 mock。第一次 `draft_pr` 故意失败，修一次之后必须出现 `repairs=1` 和 `verdict pass`。引用必须是工具输出里的原样子串。高严重度 issue 是 `#12` 和 `#18`。清单要覆盖 tests、docs、risk、rollback。不要打开密钥，也不要依赖 `pnpm demo:live`（中国大陆可能被 OpenAI 地理封锁）。
+
 ## 0:00–0:20 — The sentence
 
 Say: "ForgeFlow turns one sentence into a checkable tool workflow."

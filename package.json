@@ -9,6 +9,7 @@
   },
   "scripts": {
     "demo:mock": "tsx src/cli.ts demo --mode mock",
+    "demo": "tsx src/cli.ts demo --mode mock",
     "demo:live": "tsx src/cli.ts demo --mode live",
     "test": "vitest run",
     "eval": "tsx src/cli.ts eval",

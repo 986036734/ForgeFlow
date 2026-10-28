@@ -1,4 +1,5 @@
 import type { RunResult } from "../agent/types.js";
+import { issueOutputSchema } from "../tools/schemas.js";
 
 export type TraceTone = "neutral" | "local" | "mcp" | "fail" | "pass" | "repair";
 
@@ -56,10 +57,11 @@ export function buildTrace(result: RunResult): TraceEvent[] {
       continue;
     }
 
-    const issueNumber =
-      call.ok && call.tool === "get_issue"
-        ? (call.output as { issue?: { number?: number } }).issue?.number
-        : undefined;
+    let issueNumber: number | undefined;
+    if (call.ok && call.tool === "get_issue") {
+      const parsed = issueOutputSchema.safeParse(call.output);
+      if (parsed.success) issueNumber = parsed.data.issue.number;
+    }
     push({
       phase: "tool",
       tone: call.kind === "mcp" ? "mcp" : "local",

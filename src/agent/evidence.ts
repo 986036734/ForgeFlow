@@ -1,6 +1,6 @@
-import type { EvidenceBundle, ToolCallRecord } from "./types.js";
-import { ToolError } from "../util/errors.js";
-import type { FilesOutput, Issue, IssueOutput, IssuesOutput, ReadmeOutput } from "./types.js";
+import type { EvidenceBundle, Issue, ToolCallRecord } from "./types.js";
+import { filesOutputSchema, issueOutputSchema, issuesOutputSchema, readmeOutputSchema } from "../tools/schemas.js";
+import { schemaMessage, ToolError } from "../util/errors.js";
 
 export function readmeExcerpt(readme: string): string {
   for (const line of readme.split("\n")) {
@@ -22,17 +22,31 @@ export function collectEvidence(calls: ToolCallRecord[]): EvidenceBundle {
   for (const call of calls) {
     if (!call.ok) continue;
     if (call.tool === "read_readme") {
-      const output = call.output as ReadmeOutput;
-      readme = output.text ?? "";
-      readmePath = output.path ?? "";
+      const parsed = readmeOutputSchema.safeParse(call.output);
+      if (!parsed.success) {
+        throw new ToolError(`read_readme returned an unexpected payload: ${schemaMessage(parsed.error)}`);
+      }
+      readme = parsed.data.text;
+      readmePath = parsed.data.path;
     } else if (call.tool === "list_files") {
-      files = [...((call.output as FilesOutput).files ?? [])];
+      const parsed = filesOutputSchema.safeParse(call.output);
+      if (!parsed.success) {
+        throw new ToolError(`list_files returned an unexpected payload: ${schemaMessage(parsed.error)}`);
+      }
+      files = [...parsed.data.files];
     } else if (call.tool === "list_open_issues") {
-      const output = call.output as IssuesOutput;
-      issues.splice(0, issues.length, ...(output.issues ?? []));
+      const parsed = issuesOutputSchema.safeParse(call.output);
+      if (!parsed.success) {
+        throw new ToolError(`list_open_issues returned an unexpected payload: ${schemaMessage(parsed.error)}`);
+      }
+      issues.splice(0, issues.length, ...parsed.data.issues);
     } else if (call.tool === "get_issue") {
-      const issue = (call.output as IssueOutput).issue;
-      if (issue && !issues.some((item) => item.number === issue.number)) issues.push(issue);
+      const parsed = issueOutputSchema.safeParse(call.output);
+      if (!parsed.success) {
+        throw new ToolError(`get_issue returned an unexpected payload: ${schemaMessage(parsed.error)}`);
+      }
+      const issue: Issue = parsed.data.issue;
+      if (!issues.some((item) => item.number === issue.number)) issues.push(issue);
     }
   }
 

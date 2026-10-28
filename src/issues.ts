@@ -1,17 +1,9 @@
 import fs from "node:fs";
 import { z } from "zod";
 import type { Issue } from "./agent/types.js";
+import { issueSchema } from "./tools/schemas.js";
 import { issuesPath } from "./util/paths.js";
 import { ToolError } from "./util/errors.js";
-
-const issueSchema = z.object({
-  number: z.number().int().positive(),
-  title: z.string().min(1),
-  body: z.string().min(1),
-  severity: z.enum(["high", "medium", "low"]),
-  state: z.enum(["open", "closed"]),
-  labels: z.array(z.string()),
-});
 
 const issueListSchema = z.array(issueSchema);
 

@@ -1,8 +1,9 @@
 import type { PrDraft, ToolCallRecord, ToolContext } from "../../agent/types.js";
 import { GATE_LINES, REQUIRED_GATES } from "../../demo/scenarios.js";
-import { draftPrInput } from "../schemas.js";
+import { draftPrInput, issueOutputSchema, prDraftSchema } from "../schemas.js";
 import { collectEvidence, readmeExcerpt } from "../../agent/evidence.js";
 import { highSeverity, issueRef } from "../../issues.js";
+import { schemaMessage, ToolError } from "../../util/errors.js";
 
 export const draftPrTool = {
   name: "draft_pr",
@@ -64,13 +65,13 @@ export function groundedDraft(goal: string, attempt: number, calls: ToolCallReco
 
   for (const call of calls) {
     if (!call.ok || call.tool !== "get_issue") continue;
-    const output = call.output as { issue?: { number?: number; title?: string } };
-    if (!output.issue?.number || !output.issue.title) continue;
+    const parsed = issueOutputSchema.safeParse(call.output);
+    if (!parsed.success) continue;
     evidenceRefs.push({
       callId: call.id,
       tool: call.tool,
       kind: call.kind,
-      supports: output.issue.title,
+      supports: parsed.data.issue.title,
     });
   }
 
@@ -91,6 +92,14 @@ export function groundedDraft(goal: string, attempt: number, calls: ToolCallReco
     attempt,
     intentionalGap: false,
   };
+}
+
+export function parsePrDraft(output: unknown): PrDraft {
+  const parsed = prDraftSchema.safeParse(output);
+  if (!parsed.success) {
+    throw new ToolError(`draft_pr returned an unexpected payload: ${schemaMessage(parsed.error)}`);
+  }
+  return parsed.data;
 }
 
 export function citedNumbers(draft: PrDraft): number[] {

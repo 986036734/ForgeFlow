@@ -1,11 +1,13 @@
 import fs from "node:fs";
 import path from "node:path";
+import { z } from "zod";
 import { runWorkflow } from "../src/agent/loop.js";
 import { collectEvidence } from "../src/agent/evidence.js";
 import { verifyAttempt } from "../src/agent/verifier.js";
-import type { RubricCheck, ToolCallRecord, ToolKind } from "../src/agent/types.js";
+import type { RubricCheck, ToolCallRecord } from "../src/agent/types.js";
 import { groundedDraft } from "../src/tools/local/draftPr.js";
 import { loadIssues } from "../src/issues.js";
+import { schemaMessage } from "../src/util/errors.js";
 import { repoRoot } from "../src/util/paths.js";
 
 export interface EvalResult {
@@ -19,18 +21,48 @@ export interface EvalReport {
   results: EvalResult[];
 }
 
-interface WorkflowCase {
-  id: string;
-  kind: "workflow";
-  goal: string;
-  expect: { verdict: "pass" | "fail"; repairs: number; hitl: "approve" | "reject"; tools: string[]; kinds: ToolKind[] };
-}
+const workflowCaseSchema = z.object({
+  id: z.string().min(1),
+  kind: z.literal("workflow"),
+  goal: z.string().min(1),
+  expect: z.object({
+    verdict: z.enum(["pass", "fail"]),
+    repairs: z.number().int().nonnegative(),
+    hitl: z.enum(["approve", "reject"]),
+    tools: z.array(z.string()),
+    kinds: z.array(z.enum(["local", "mcp"])),
+  }),
+});
 
-interface RubricCase {
-  id: string;
-  kind: "rubric";
-  mutate: "drop-rollback" | "phantom-issue" | "unsupported-claim";
-  expect: { pass: boolean; failedChecks: string[] };
+const rubricCaseSchema = z.object({
+  id: z.string().min(1),
+  kind: z.literal("rubric"),
+  mutate: z.enum(["drop-rollback", "phantom-issue", "unsupported-claim"]),
+  expect: z.object({
+    pass: z.boolean(),
+    failedChecks: z.array(z.string()),
+  }),
+});
+
+const evalCaseSchema = z.discriminatedUnion("kind", [workflowCaseSchema, rubricCaseSchema]);
+
+type WorkflowCase = z.infer<typeof workflowCaseSchema>;
+type RubricCase = z.infer<typeof rubricCaseSchema>;
+
+export function parseEvalCase(file: string, text: string): { id: string; spec?: WorkflowCase | RubricCase; error?: string } {
+  let raw: unknown;
+  try {
+    raw = JSON.parse(text);
+  } catch (error) {
+    return { id: file, error: `invalid JSON: ${error instanceof Error ? error.message : String(error)}` };
+  }
+  const parsed = evalCaseSchema.safeParse(raw);
+  if (!parsed.success) {
+    const id =
+      raw && typeof raw === "object" && "id" in raw && typeof raw.id === "string" ? raw.id : file;
+    return { id, error: schemaMessage(parsed.error) };
+  }
+  return { id: parsed.data.id, spec: parsed.data };
 }
 
 export async function runEvals(root = repoRoot()): Promise<EvalReport> {
@@ -38,8 +70,12 @@ export async function runEvals(root = repoRoot()): Promise<EvalReport> {
   const files = fs.readdirSync(dir).filter((file) => file.endsWith(".json")).sort();
   const results: EvalResult[] = [];
   for (const file of files) {
-    const spec = JSON.parse(fs.readFileSync(path.join(dir, file), "utf8")) as WorkflowCase | RubricCase;
-    results.push(spec.kind === "workflow" ? await runWorkflowCase(spec, root) : runRubricCase(spec, root));
+    const loaded = parseEvalCase(file, fs.readFileSync(path.join(dir, file), "utf8"));
+    if (!loaded.spec) {
+      results.push({ id: loaded.id, pass: false, detail: loaded.error ?? "invalid case" });
+      continue;
+    }
+    results.push(loaded.spec.kind === "workflow" ? await runWorkflowCase(loaded.spec, root) : runRubricCase(loaded.spec, root));
   }
   return { ok: results.every((result) => result.pass), results };
 }
@@ -116,6 +152,9 @@ function mutatedChecks(mutate: RubricCase["mutate"], root: string): { checks: Ru
     draft.issues.push({ number: 999, note: "This issue is not in the tool corpus." });
   } else if (mutate === "unsupported-claim") {
     draft.claims.push("All CI checks are already green and this change has zero risk.");
+  } else {
+    const unexpected: never = mutate;
+    throw new Error(`Unknown rubric mutation: ${String(unexpected)}`);
   }
   const record = verifyAttempt(draft, collectEvidence(calls), calls);
   return { checks: record.checks, pass: record.pass };

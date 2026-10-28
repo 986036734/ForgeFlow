@@ -2,13 +2,20 @@ import fs from "node:fs/promises";
 import path from "node:path";
 import type { RunResult } from "../agent/types.js";
 import { renderDraft } from "../tools/local/draftPr.js";
+import { runtimeInfo } from "./runtimeInfo.js";
 import { buildTrace } from "./trace.js";
+
+function runtimeLine(result: RunResult): string {
+  const info = runtimeInfo(result.mode);
+  return `${info.name} ${info.version} · node ${info.node} · ${info.sdk}`;
+}
 
 export function renderTranscript(result: RunResult): string {
   const lines = [
     "ForgeFlow mock demo",
     `mode: ${result.mode}`,
     `offline: ${String(result.offline)}`,
+    `runtime: ${runtimeLine(result)}`,
     `goal: ${result.goal}`,
     "",
     "plan:",
@@ -39,6 +46,8 @@ export function renderMarkdown(result: RunResult): string {
     "# ForgeFlow trace",
     "",
     `**verdict ${result.verdict.label}** · repairs=${result.verdict.repairs} · offline ${String(result.offline)}`,
+    "",
+    `Runtime: ${runtimeLine(result)}.`,
     "",
     result.goal,
     "",
@@ -117,18 +126,20 @@ export function renderHtml(result: RunResult): string {
   main { max-width: 1080px; margin: 0 auto; padding: 24px; display: grid; gap: 16px; }
   .badge, .verdict { display: inline-block; border-radius: 999px; padding: 4px 10px; font-size: 14px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; }
   .verdict { font-size: 22px; padding: 8px 16px; }
-  .verdict.pass, .tone-pass strong { color: #0b6e4f; }
-  .verdict.fail, .tone-fail strong { color: #9b1c1c; }
+  .verdict.pass, .tone-pass strong { color: #085c3f; }
+  .verdict.fail, .tone-fail strong { color: #7f1d1d; }
   .verdict.pass { background: #e5f6ef; }
   .verdict.fail { background: #fde8e8; }
   .local { background: #e5f6ef; color: #0b6e4f; }
   .mcp { background: #e7f0fa; color: #1d4e89; }
   .banner { background: #fff; border: 1px solid var(--line); border-radius: 16px; padding: 20px 24px; }
   .banner p { margin: 8px 0 0; color: var(--muted); }
-  .story { font-size: 32px; font-weight: 700; letter-spacing: -0.03em; }
-  .fail { color: #9b1c1c; }
-  .repair { color: #8a4b08; }
-  .pass { color: #0b6e4f; }
+  .story { font-size: 40px; font-weight: 800; letter-spacing: -0.03em; }
+  .fail { color: #7f1d1d; }
+  .repair { color: #7a3e06; }
+  .pass { color: #085c3f; }
+  .runtime { color: var(--muted); font-size: 14px; margin-top: 4px; }
+  .legend { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin: 12px 0 0; }
   .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
   .stat { background: #fff; border: 1px solid var(--line); border-radius: 12px; padding: 12px 14px; }
   .stat b { display: block; font-size: 28px; }
@@ -151,6 +162,7 @@ export function renderHtml(result: RunResult): string {
   <div>
     <h1>ForgeFlow</h1>
     <div>offline mock · local Zod tools + stdio MCP</div>
+    <div class="runtime">${escapeHtml(runtimeLine(result))}</div>
   </div>
   <div class="verdict ${result.verdict.label}" data-verdict="${escapeHtml(result.verdict.label)}" data-repairs="${result.verdict.repairs}">verdict ${escapeHtml(result.verdict.label)}</div>
 </header>
@@ -158,6 +170,8 @@ export function renderHtml(result: RunResult): string {
   <section class="banner">
     <div class="story"><span class="fail">FAIL</span> → <span class="repair">repair ${result.verdict.repairs}</span> → <span class="pass">${result.verdict.pass ? "PASS" : "FAIL"}</span></div>
     <p>${escapeHtml(result.goal)}</p>
+    <p>Claims must be exact substrings of tool output. The first draft fails on purpose.</p>
+    <p class="legend"><span class="badge local">local</span> Zod tool on disk <span class="badge mcp">mcp</span> stdio issue server</p>
   </section>
   <div class="stats">
     <div class="stat"><b>${result.verdict.repairs}</b><span>repairs</span></div>

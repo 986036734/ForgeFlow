@@ -6,7 +6,6 @@ import { getTool } from "../tools/registry.js";
 import { draftPrTool } from "../tools/local/draftPr.js";
 import { listFilesTool } from "../tools/local/listFiles.js";
 import { readReadmeTool } from "../tools/local/readReadme.js";
-import type { Issue } from "./types.js";
 
 const localRunners = {
   read_readme: readReadmeTool.run,
@@ -109,9 +108,4 @@ async function runTool(
   if (!session.bridge) throw new McpError("MCP bridge is not started");
   const args = input as Record<string, unknown>;
   return session.bridge.call(name, args);
-}
-
-export function issueNumbersFromCalls(calls: ToolCallRecord[]): number[] {
-  const evidence = collectEvidence(calls);
-  return evidence.issues.map((issue: Issue) => issue.number);
 }
