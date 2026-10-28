@@ -28,6 +28,21 @@ describe("repair loop", () => {
     expect(demoExitCode(result)).toBe(1);
   });
 
+  it("does not repair when the budget is zero", async () => {
+    const result = await runWorkflow({
+      goal: DEMO_GOAL,
+      writeArtifacts: false,
+      maxRepairs: 0,
+    });
+    expect(result.attempts).toHaveLength(1);
+    expect(result.verdict.pass).toBe(false);
+    expect(result.verdict.repairs).toBe(0);
+  });
+
+  it("rejects a repair budget the draft schema cannot represent", async () => {
+    await expect(runWorkflow({ goal: DEMO_GOAL, writeArtifacts: false, maxRepairs: 9 })).rejects.toThrow(/0 to 4/);
+  });
+
   it("stops after the repair budget when every draft fails", async () => {
     const result = await runWorkflow({
       goal: DEMO_GOAL,

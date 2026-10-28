@@ -1,7 +1,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { describe, expect, it } from "vitest";
-import { runEvals } from "../evals/runner.js";
+import { parseEvalCase, runEvals } from "../evals/runner.js";
 import { repoRoot } from "../src/util/paths.js";
 
 describe("evals", () => {
@@ -14,6 +14,22 @@ describe("evals", () => {
       "unsupported-claim:true:ok",
     ]);
     expect(report.ok).toBe(true);
+  });
+
+  it("reports a broken eval file instead of throwing", () => {
+    expect(parseEvalCase("broken.json", "{").error).toMatch(/invalid JSON/);
+    const mutated = parseEvalCase(
+      "bad.json",
+      JSON.stringify({
+        id: "bad-mutate",
+        kind: "rubric",
+        mutate: "invented",
+        expect: { pass: false, failedChecks: [] },
+      }),
+    );
+    expect(mutated.id).toBe("bad-mutate");
+    expect(mutated.spec).toBeUndefined();
+    expect(mutated.error).toBeTruthy();
   });
 
   it("keeps the polish regressions for checklist and phantom issues", () => {

@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { readReadmeTool } from "../src/tools/local/readReadme.js";
 import { listFilesTool } from "../src/tools/local/listFiles.js";
-import { intentionalGapDraft } from "../src/tools/local/draftPr.js";
+import { intentionalGapDraft, parsePrDraft } from "../src/tools/local/draftPr.js";
 import { readReadmeInput } from "../src/tools/schemas.js";
 import { repoRoot } from "../src/util/paths.js";
 import type { ToolContext } from "../src/agent/types.js";
@@ -43,5 +43,10 @@ describe("local tools", () => {
     expect(draft.checklist).toEqual(["Ship it"]);
     expect(draft.issues).toEqual([]);
     expect(draft.claims[0]).toMatch(/zero risk/);
+    expect(parsePrDraft(draft).intentionalGap).toBe(true);
+  });
+
+  it("rejects a draft payload that is not a PR draft", () => {
+    expect(() => parsePrDraft({ title: "Update repository" })).toThrow(/unexpected payload/);
   });
 });

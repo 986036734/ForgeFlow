@@ -43,6 +43,12 @@ function calls(): ToolCallRecord[] {
 }
 
 describe("rubric and coverage", () => {
+  it("rejects a tool payload that does not match the schema", () => {
+    const sample = calls();
+    sample[0] = { ...sample[0], output: { path: "README.md" } };
+    expect(() => collectEvidence(sample)).toThrow(/unexpected payload/);
+  });
+
   it("rejects the intentional gap draft", () => {
     const sample = calls();
     const record = verifyAttempt(intentionalGapDraft(1), collectEvidence(sample), sample);

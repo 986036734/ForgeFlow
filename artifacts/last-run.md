@@ -2,6 +2,8 @@
 
 **verdict pass** · repairs=1 · offline true
 
+Runtime: forgeflow 0.1.0 · node v22.23.4 · @openai/agents@0.21.0.
+
 Audit the repo README and open issues, then draft a PR description and checklist.
 
 ## Plan
