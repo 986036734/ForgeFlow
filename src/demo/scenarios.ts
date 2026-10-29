@@ -10,7 +10,7 @@ export type GateId = (typeof REQUIRED_GATES)[number];
 export const GATE_LINES: Record<GateId, string> = {
   tests: "Tests cover the verifier rubric and the mock repair loop",
   docs: "Docs point judges at DEMO.md and the stdio MCP server",
-  risk: "Risk: live OpenAI calls can fail on geo-blocked networks, including mainland China",
+  risk: "Risk: a live model can invent a claim the tools never returned",
   rollback: "Rollback: revert the PR; the mock path has no external side effects",
 };
 

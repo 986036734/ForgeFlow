@@ -1,20 +1,22 @@
 # ForgeFlow
 
-ForgeFlow turns one sentence into a checkable tool workflow.
+ForgeFlow turns one sentence into a checkable pull request: OpenAI calls the tools, and a verifier accepts only claims copied from tool output.
 
-**Judged sentence:** a planner maps that sentence onto local Zod tools and an MCP issue server, the worker drafts a PR, the verifier rejects the first draft on purpose, one repair passes, and the trace shows the evidence.
+OpenAI is the live demo. With `OPENAI_API_KEY` set, `pnpm demo` calls the Responses API, which uses function tools to read this repo and a strict JSON schema for the audit. Without a key, the same command runs a deterministic offline mock, so the fail, repair, and pass trace still runs with no network.
 
-## Problem
+## Quickstart
 
-A fluent PR can still be ungrounded. It can skip the README, cite no issues, and claim the change has zero risk without a tool ever saying that. Judges are left trusting the prose.
+Live, when a key is available:
 
-ForgeFlow makes that failure visible, then repairs it from tool output only. The first `draft_pr` is an intentional gap: no README quote, no issue numbers, a checklist that says "Ship it", and an unsupported claim. One repair drafts again from the tool corpus. The verifier accepts a claim only when it is an exact substring of tool output. High-severity issues must be cited. The checklist must cover tests, docs, risk, and rollback.
+```bash
+pnpm install
+cp .env.example .env
+pnpm demo
+```
 
-Do not remove the first-draft failure. The judge path expects `repairs=1`.
+Put `OPENAI_API_KEY` in `.env`. `OPENAI_MODEL` is optional and defaults to `gpt-5.6-luna`. Stdout starts with `demo mode: live`.
 
-## Judge path
-
-Node 20 or newer and pnpm. No API key. Stay offline.
+Offline:
 
 ```bash
 pnpm install
@@ -23,22 +25,33 @@ pnpm demo:mock
 pnpm eval
 ```
 
-`pnpm demo` is the same mock run as `pnpm demo:mock`. On stdout, in this order: `intentional draft-pr FAIL`, `repair 1`, `repairs=1`, `verdict pass`. The run also writes [artifacts/last-run.md](artifacts/last-run.md) and [artifacts/last-run.html](artifacts/last-run.html). Open the HTML for the camera. The sticky header is **verdict pass**. The banner reads FAIL → repair 1 → PASS.
+`pnpm demo` with no key prints `demo mode: mock (offline fallback; OPENAI_API_KEY is not set)` and then the same transcript as `pnpm demo:mock`: `intentional draft-pr FAIL`, `repair 1`, `repairs=1`, `verdict pass`. The run writes [artifacts/last-run.md](artifacts/last-run.md) and [artifacts/last-run.html](artifacts/last-run.html). Open the HTML for the camera. The sticky header is **verdict pass**. The banner reads FAIL → repair 1 → PASS.
 
 Full 3-minute camera script: [DEMO.md](DEMO.md).
 
-## 给评委
+## For judges
 
-评分只看离线 mock，不要调用 OpenAI。
+`pnpm demo` is the headline. With `OPENAI_API_KEY` set it calls the OpenAI Responses API: function tools first, then a strict JSON schema named `forgeflow_audit`. The first stdout line is `demo mode: live`. Without a key the same command prints `demo mode: mock` and runs the offline proof.
+
+Deterministic checks, all offline:
 
 ```bash
-pnpm install
+pnpm test
 pnpm demo:mock
+pnpm eval
 ```
 
-终端应按这个顺序出现 `intentional draft-pr FAIL`、`repair 1`、`repairs=1`、`verdict pass`。然后打开 `artifacts/last-run.html`，顶栏是 verdict pass。
+`pnpm demo:mock` must print, in order, `intentional draft-pr FAIL`, `repair 1`, `repairs=1`, and `verdict pass`. Open `artifacts/last-run.html`. The sticky header is **verdict pass**.
 
-核对规则：修复后的 claim 必须是工具输出的原样子串；高严重度 issue `#12` 和 `#18` 必须被引用；清单必须覆盖 tests、docs、risk、rollback。第一次失败是故意的，不要把它修掉。`pnpm test` 和 `pnpm eval` 是另外两项离线检查。`pnpm demo:live` 会访问 `api.openai.com`，在中国大陆等地可能被地理封锁，不作为评分路径。
+The first `draft_pr` failure is intentional. Leave it in place. A repaired claim must be an exact substring of tool output. High-severity issues `#12` and `#18` must be cited. The checklist must cover tests, docs, risk, and rollback. Do not commit an API key.
+
+## Problem
+
+A fluent PR can still be ungrounded. It can skip the README, cite no issues, and claim the change has zero risk without a tool ever saying that. Judges are left trusting the prose.
+
+ForgeFlow makes that failure visible, then repairs it from tool output only. The first `draft_pr` is an intentional gap: no README quote, no issue numbers, a checklist that says "Ship it", and an unsupported claim. One repair drafts again from the tool corpus. The verifier accepts a claim only when it is an exact substring of tool output. High-severity issues must be cited. The checklist must cover tests, docs, risk, and rollback.
+
+Do not remove the first-draft failure. The mock path expects `repairs=1`.
 
 ## Architecture
 
@@ -85,25 +98,30 @@ The fixture's high-severity issues are `#12` and `#18`. `#27` is medium and is l
 
 | Piece | Mock judge path | Live path |
 | --- | --- | --- |
-| Planner | `createPlan` assigns steps and `local` / `mcp` kinds | Same tools, model follows `LIVE_INSTRUCTIONS` |
-| Local tools | Zod schemas: `read_readme`, `list_files`, `draft_pr` | `@openai/agents` `tool()` with the same schemas |
-| Issue tools | stdio MCP: `list_open_issues`, `get_issue` | `MCPServerStdio` pointed at `pnpm exec tsx src/mcp-server/index.ts` |
-| Verifier | Rubric + exact-substring coverage | Instructions ask the model to cite tool output |
-| Repair | One deterministic re-draft | Not scripted; mock owns the fail-then-repair beat |
-| HITL | Auto-approve after a pass. `FORGEFLOW_HITL=deny` or `--hitl deny` rejects | SDK `needsApproval` is available; the mock gate is the demo |
-| Trace | `artifacts/last-run.md` and `.html` | Model text on stdout |
+| Planner | `createPlan` assigns steps and `local` / `mcp` kinds | The model follows the live instructions and must call tools |
+| Local tools | Zod schemas: `read_readme`, `list_files`, `draft_pr` | Responses function tools built from the same Zod schemas |
+| Issue tools | stdio MCP: `list_open_issues`, `get_issue` | Same MCP server, invoked when the model calls those tools |
+| Verifier | Rubric + exact-substring coverage | Second Responses call, strict JSON schema `forgeflow_audit` |
+| Repair | One deterministic re-draft | Not scripted; the mock owns the fail-then-repair beat |
+| HITL | Auto-approve after a pass. `FORGEFLOW_HITL=deny` or `--hitl deny` rejects | The mock gate is the demo |
+| Trace | `artifacts/last-run.md` and `.html` | Audit text on stdout, prefixed with `demo mode: live` |
 
-SDK pin: `@openai/agents` 0.21. The server is [src/mcp-server/index.ts](src/mcp-server/index.ts).
+Live calls use the OpenAI Node SDK (`openai`) Responses API: function tools, then a strict `json_schema` text format. `@openai/agents` 0.21 remains the agent SDK pin. The server is [src/mcp-server/index.ts](src/mcp-server/index.ts).
 
-## Live mode and geography
+## Live mode
 
-`pnpm demo:live` calls `api.openai.com`. OpenAI geo-blocks that API from mainland China and some other networks, so a live call can fail even with a valid key. Do not put a key in the repo. Copy [.env.example](.env.example) to `.env` locally if you have a key. Judges should score `pnpm demo:mock`.
+`pnpm demo` selects the mode from the environment:
 
-Optional knobs, all unset on the scored path:
+- `OPENAI_API_KEY` set: OpenAI Responses API. The model is `OPENAI_MODEL` or `gpt-5.6-luna`. The first call sends function tools (`read_readme`, `list_files`, `list_open_issues`, `get_issue`) with `tool_choice: required`. ForgeFlow runs those tools locally and through the stdio MCP server, then asks for a strict `forgeflow_audit` JSON schema.
+- Key unset: offline mock. Stdout says `demo mode: mock` and includes the fallback reason.
+
+`pnpm demo:mock` always runs the mock. `pnpm demo:live` always calls the API and exits 2 when the key is missing. Do not put a key in the repo. Copy [.env.example](.env.example) to `.env` locally.
+
+Optional knobs, all unset on the scored mock path:
 
 - `pnpm demo:mock -- --hitl deny` rejects a draft that already passed the rubric. Exit code 1 is expected.
-- `FORGEFLOW_MAX_REPAIRS` is an integer from 0 to 4. The default is 2, which leaves room for the one repair the judge path needs.
-- A typo in `FORGEFLOW_MODE`, `FORGEFLOW_HITL`, or `FORGEFLOW_MAX_REPAIRS` exits 2 instead of silently changing the demo.
+- `FORGEFLOW_MAX_REPAIRS` is an integer from 0 to 4. The default is 2, which leaves room for the one repair the mock path needs.
+- A typo in `FORGEFLOW_MODE`, `FORGEFLOW_HITL`, or `FORGEFLOW_MAX_REPAIRS` exits 2 instead of silently changing the demo. `pnpm demo` chooses live or mock from `OPENAI_API_KEY`, not from `FORGEFLOW_MODE`.
 
 ## MCP server
 

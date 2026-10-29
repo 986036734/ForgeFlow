@@ -34,8 +34,8 @@ describe("offline mock", () => {
     delete process.env.OPENAI_API_KEY;
     try {
       const { runLive } = await import("../src/agent/live.js");
-      await expect(runLive(DEMO_GOAL)).rejects.toThrow(/pnpm demo:mock/);
-      await expect(runLive(DEMO_GOAL)).rejects.toThrow(/China/);
+      await expect(runLive(DEMO_GOAL)).rejects.toThrow(/OPENAI_API_KEY/);
+      await expect(runLive(DEMO_GOAL)).rejects.toThrow(/offline mock/);
     } finally {
       if (previous === undefined) delete process.env.OPENAI_API_KEY;
       else process.env.OPENAI_API_KEY = previous;
