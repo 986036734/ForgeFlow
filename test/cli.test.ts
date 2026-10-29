@@ -12,6 +12,10 @@ const base: ForgeConfig = {
 };
 
 describe("demo CLI", () => {
+  it("defaults an omitted mode to automatic selection", () => {
+    expect(parseDemoArgs([], base).mode).toBe("auto");
+  });
+
   it("parses the scored mock invocation", () => {
     expect(parseDemoArgs(["--mode", "mock", "--no-artifacts"], base)).toEqual({
       mode: "mock",
@@ -24,6 +28,7 @@ describe("demo CLI", () => {
 
   it("lets a hitl flag override the config", () => {
     expect(parseDemoArgs(["--mode", "mock", "--hitl", "deny"], base).hitl).toBe("deny");
+    expect(parseDemoArgs(["--", "--mode", "mock", "--hitl", "deny"], base).hitl).toBe("deny");
   });
 
   it("rejects a missing flag value, a custom mock goal, and an oversized repair budget", () => {
@@ -33,9 +38,52 @@ describe("demo CLI", () => {
     expect(() => parseDemoArgs(["--surprise"], base)).toThrow(/Unknown flag/);
   });
 
+  it("returns 2 when live mode is requested without an API key", async () => {
+    const errors: string[] = [];
+    const original = console.error;
+    console.error = (message?: unknown) => {
+      errors.push(String(message));
+    };
+    const previous = process.env.OPENAI_API_KEY;
+    delete process.env.OPENAI_API_KEY;
+    try {
+      await expect(main(["demo", "--mode", "live", "--no-artifacts"])).resolves.toBe(2);
+      expect(errors.join("\n")).toContain("OPENAI_API_KEY");
+      expect(errors.join("\n")).toContain("offline mock");
+    } finally {
+      console.error = original;
+      if (previous === undefined) delete process.env.OPENAI_API_KEY;
+      else process.env.OPENAI_API_KEY = previous;
+    }
+  });
+
   it("returns 2 for a bad mode without running the workflow", async () => {
     await expect(main(["demo", "--mode", "sideways"])).resolves.toBe(2);
     await expect(main(["eval", "--extra"])).resolves.toBe(2);
+  });
+
+  it("falls back to the offline mock when pnpm demo has no API key", async () => {
+    const lines: string[] = [];
+    const original = console.log;
+    console.log = (message?: unknown) => {
+      lines.push(String(message));
+    };
+    const previous = process.env.OPENAI_API_KEY;
+    delete process.env.OPENAI_API_KEY;
+    try {
+      const code = await main(["demo", "--no-artifacts"]);
+      const text = lines.join("\n");
+      expect(code).toBe(0);
+      expect(text).toContain("demo mode: mock (offline fallback; OPENAI_API_KEY is not set)");
+      expect(text).toContain("intentional draft-pr FAIL");
+      expect(text).toContain("repair 1");
+      expect(text).toContain("repairs=1");
+      expect(text).toContain("verdict pass");
+    } finally {
+      console.log = original;
+      if (previous === undefined) delete process.env.OPENAI_API_KEY;
+      else process.env.OPENAI_API_KEY = previous;
+    }
   });
 
   it("prints repairs=1 and verdict pass for the scored mock", async () => {

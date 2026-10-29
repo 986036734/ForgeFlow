@@ -1,7 +1,8 @@
 import { loadEnvFile } from "./env.js";
 import { DEMO_GOAL } from "./demo/scenarios.js";
 import { demoExitCode, runMockDemo } from "./demo/run.js";
-import type { HitlPolicy, RunMode } from "./agent/types.js";
+import type { HitlPolicy } from "./agent/types.js";
+import { selectDemoMode, type RequestedDemoMode } from "./demo/mode.js";
 import { loadConfig, MAX_REPAIRS_CAP, type ForgeConfig } from "./util/config.js";
 import { logger } from "./util/logger.js";
 import { renderTranscript } from "./util/report.js";
@@ -9,7 +10,7 @@ import { ConfigError, ForgeError } from "./util/errors.js";
 import { assertSupportedNode } from "./util/runtimeInfo.js";
 
 export interface DemoInvocation {
-  mode: RunMode;
+  mode: RequestedDemoMode;
   goal: string;
   writeArtifacts: boolean;
   hitl: HitlPolicy;
@@ -22,12 +23,12 @@ const BOOLEAN_FLAGS = new Set(["--no-artifacts"]);
 export function parseDemoArgs(args: string[], config: ForgeConfig): DemoInvocation {
   const flags = consumeFlags(args);
   const modeValue = flags.get("--mode");
-  const mode = typeof modeValue === "string" ? modeValue : config.mode;
-  if (mode !== "mock" && mode !== "live") {
-    throw new ConfigError("mode must be mock or live");
+  const mode = typeof modeValue === "string" ? modeValue : "auto";
+  if (mode !== "auto" && mode !== "mock" && mode !== "live") {
+    throw new ConfigError("mode must be auto, mock, or live");
   }
   const goalFlag = flags.get("--goal");
-  if (mode === "mock" && typeof goalFlag === "string") {
+  if (mode !== "live" && typeof goalFlag === "string") {
     throw new ConfigError("mock mode always uses the scored demo goal. Pass --mode live to set --goal.");
   }
   const hitlFlag = flags.get("--hitl");
@@ -90,17 +91,23 @@ async function dispatch(argv: string[]): Promise<number> {
     return 0;
   }
   logger.error(
-    "Usage: tsx src/cli.ts demo [--mode mock|live] [--hitl auto|deny] [--max-repairs N] [--no-artifacts] | tsx src/cli.ts eval | tsx src/cli.ts mcp",
+    "Usage: tsx src/cli.ts demo [--mode auto|mock|live] [--hitl auto|deny] [--max-repairs N] [--no-artifacts] | tsx src/cli.ts eval | tsx src/cli.ts mcp",
   );
   return 1;
 }
 
 async function runDemo(args: string[]): Promise<number> {
   const parsed = parseDemoArgs(args, loadConfig());
-  if (parsed.mode === "live") {
+  const decision = selectDemoMode({
+    requested: parsed.mode,
+    apiKey: process.env.OPENAI_API_KEY,
+    model: process.env.OPENAI_MODEL,
+  });
+  logger.info(decision.banner);
+  if (decision.mode === "live") {
     try {
       const { runLive } = await import("./agent/live.js");
-      logger.info(await runLive(parsed.goal));
+      logger.info(await runLive(parsed.goal, { model: decision.model }));
       return 0;
     } catch (error) {
       if (error instanceof ConfigError) throw error;
@@ -127,6 +134,7 @@ function consumeFlags(args: string[]): Map<string, string | true> {
   const found = new Map<string, string | true>();
   for (let i = 0; i < args.length; i++) {
     const arg = args[i];
+    if (arg === "--") continue;
     if (!arg?.startsWith("--")) {
       throw new ConfigError(`Unexpected argument ${arg}`);
     }

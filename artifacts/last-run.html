@@ -102,10 +102,10 @@ INTENTIONAL_GAP</pre>
       <pre># PR: Audit README and cite open issues
 
 ## Summary
-Audit for &quot;Audit the repo README and open issues, then draft a PR description and checklist&quot;. README states: `ForgeFlow turns one sentence into a checkable tool workflow.` The checklist is limited to evidence from local tools and MCP issue tools.
+Audit for &quot;Audit the repo README and open issues, then draft a PR description and checklist&quot;. README states: `ForgeFlow turns one sentence into a checkable pull request: OpenAI calls the tools, and a verifier accepts only claims copied from tool output.` The checklist is limited to evidence from local tools and MCP issue tools.
 
 ## README findings
-- README states: `ForgeFlow turns one sentence into a checkable tool workflow.`
+- README states: `ForgeFlow turns one sentence into a checkable pull request: OpenAI calls the tools, and a verifier accepts only claims copied from tool output.`
 
 ## Open issues
 - #12 README quick start omits the mock judge path — Judges need pnpm demo:mock called out beside pnpm test. The scored path must stay offline.
@@ -115,18 +115,18 @@ Audit for &quot;Audit the repo README and open issues, then draft a PR descripti
 ## Checklist
 - [ ] Tests cover the verifier rubric and the mock repair loop
 - [ ] Docs point judges at DEMO.md and the stdio MCP server
-- [ ] Risk: live OpenAI calls can fail on geo-blocked networks, including mainland China
+- [ ] Risk: a live model can invent a claim the tools never returned
 - [ ] Rollback: revert the PR; the mock path has no external side effects
 
 ## Evidence
-- c1 read_readme (local): ForgeFlow turns one sentence into a checkable tool workflow.
+- c1 read_readme (local): ForgeFlow turns one sentence into a checkable pull request: OpenAI calls the tools, and a verifier accepts only claims copied from tool output.
 - c3 list_open_issues (mcp): open issue list
 - c2 list_files (local): DEMO.md
 - c4 get_issue (mcp): README quick start omits the mock judge path
 - c5 get_issue (mcp): Verifier accepts a PR draft that cites no issues
 
 ## Claims
-- ForgeFlow turns one sentence into a checkable tool workflow.
+- ForgeFlow turns one sentence into a checkable pull request: OpenAI calls the tools, and a verifier accepts only claims copied from tool output.
 - README quick start omits the mock judge path
 - Verifier accepts a PR draft that cites no issues
 - DEMO.md</pre>

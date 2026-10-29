@@ -2,14 +2,14 @@
   "name": "forgeflow",
   "version": "0.1.0",
   "private": true,
-  "description": "One-sentence goal to a checkable tool workflow: plan, work with local Zod tools and MCP, verify, repair, and trace.",
+    "description": "One-sentence goal to a checkable pull request: OpenAI Responses tool calling and structured output, with an offline mock that verifies and repairs.",
   "type": "module",
   "engines": {
     "node": ">=20"
   },
   "scripts": {
     "demo:mock": "tsx src/cli.ts demo --mode mock",
-    "demo": "tsx src/cli.ts demo --mode mock",
+    "demo": "tsx src/cli.ts demo",
     "demo:live": "tsx src/cli.ts demo --mode live",
     "test": "vitest run",
     "eval": "tsx src/cli.ts eval",
@@ -20,6 +20,7 @@
   "dependencies": {
     "@modelcontextprotocol/sdk": "1.32.2",
     "@openai/agents": "0.21.0",
+    "openai": "7.43.0",
     "zod": "^4.1.12"
   },
   "devDependencies": {
